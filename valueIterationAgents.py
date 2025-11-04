@@ -65,6 +65,26 @@ class ValueIterationAgent(ValueEstimationAgent):
           value iteration, V_k+1(...) depends on V_k(...)'s.
         """
         "*** YOUR CODE HERE ***"
+        for _ in range(self.iterations):
+            prev_values = self.values.copy()
+            for state in self.mdp.getStates():
+                if self.mdp.isTerminal(state):
+                    self.values[state] = 0.0
+                    continue
+                actions = self.mdp.getPossibleActions(state)
+                if not actions:
+                    self.values[state] = 0.0
+                    continue
+                q_values = []
+                for action in actions:
+                    q = 0.0
+                    for next_state, prob in self.mdp.getTransitionStatesAndProbs(state, action):
+                        reward = self.mdp.getReward(state, action, next_state)
+                        q += prob * (reward + self.discount * prev_values[next_state])
+                    q_values.append(q)
+                self.values[state] = max(q_values)
+
+
 
     def getValue(self, state):
         """
@@ -78,7 +98,12 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        q = 0.0
+        for next_state, prob in self.mdp.getTransitionStatesAndProbs(state, action):
+            reward = self.mdp.getReward(state, action, next_state)
+            q += prob * (reward + self.discount * self.values[next_state])
+        return q
+        #util.raiseNotDefined()
 
     def computeActionFromValues(self, state):
         """
@@ -90,7 +115,26 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        if self.mdp.isTerminal(state):
+            return None
+        actions = self.mdp.getPossibleActions(state)
+        if not actions:
+            return None
+
+        best = float("-inf")
+        best_actions = []
+        for a in actions:
+            q = self.computeQValueFromValues(state, a)
+            if q > best:
+                best = q
+                best_actions = [a]
+            elif q == best:
+                best_actions.append(a)
+
+        import random
+        return random.choice(best_actions)
+            #util.raiseNotDefined()
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
